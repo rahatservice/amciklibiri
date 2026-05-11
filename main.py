@@ -8,7 +8,12 @@ load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=".", intents=intents, help_command=None)
+
+bot = commands.Bot(
+    command_prefix=".",
+    intents=intents,
+    help_command=None
+)
 
 # =========================
 # DATA
@@ -35,10 +40,14 @@ YETKILI_ROLE_ID = 1503341765178953739
 class RegisterView(discord.ui.View):
     def __init__(self, member: discord.Member):
         super().__init__(timeout=60)
+
         self.member = member
 
         options = [
-            discord.SelectOption(label=name, value=name)
+            discord.SelectOption(
+                label=name,
+                value=name
+            )
             for name in ROLE_IDS.keys()
         ]
 
@@ -51,9 +60,11 @@ class RoleSelect(discord.ui.Select):
             placeholder="Rol seç… kariyerin başlıyor 😏",
             options=options
         )
+
         self.member = member
 
     async def callback(self, interaction: discord.Interaction):
+
         global kayit_sayisi
 
         guild = interaction.guild
@@ -61,9 +72,17 @@ class RoleSelect(discord.ui.Select):
 
         member = self.member
 
-        selected_role = guild.get_role(ROLE_IDS[role_name])
-        uye_role = guild.get_role(ROLE_IDS["Üye┇👤"])
-        kayitsiz = guild.get_role(KAYITSIZ_ROLE_ID)
+        selected_role = guild.get_role(
+            ROLE_IDS[role_name]
+        )
+
+        uye_role = guild.get_role(
+            ROLE_IDS["Üye┇👤"]
+        )
+
+        kayitsiz = guild.get_role(
+            KAYITSIZ_ROLE_ID
+        )
 
         roles_to_add = []
 
@@ -86,12 +105,18 @@ class RoleSelect(discord.ui.Select):
         elif role_name == "Bayan Üye┇🎀":
             roles_to_add = [selected_role, uye_role]
 
-        # rolleri ver
+        # =========================
+        # ROLLERİ VER
+        # =========================
+
         for r in roles_to_add:
             if r:
                 await member.add_roles(r)
 
-        # kayıtsız kaldır (garanti mod)
+        # =========================
+        # KAYITSIZ KALDIR
+        # =========================
+
         if kayitsiz and kayitsiz in member.roles:
             await member.remove_roles(kayitsiz)
 
@@ -110,18 +135,58 @@ class RoleSelect(discord.ui.Select):
 @bot.command()
 async def k(ctx, member: discord.Member, *, isim: str):
 
-    if YETKILI_ROLE_ID not in [r.id for r in ctx.author.roles]:
-        return await ctx.send("❌ Bu komutu sadece Kayıt Yetkilisi kullanabilir.")
+    # =========================
+    # YETKİ KONTROL
+    # =========================
 
-    await ctx.send(f"📋 Kayıt başlatıldı: **{member}** → isim: **{isim}**")
+    if YETKILI_ROLE_ID not in [r.id for r in ctx.author.roles]:
+        return await ctx.send(
+            "❌ Bu komutu sadece Kayıt Yetkilisi kullanabilir."
+        )
+
+    # =========================
+    # TAKMA İSİM DEĞİŞTİR
+    # =========================
+
+    try:
+        await member.edit(nick=isim)
+
+    except discord.Forbidden:
+        return await ctx.send(
+            "❌ Kullanıcının ismi değiştirilemedi.\n"
+            "Botun 'Takma Adları Yönet' yetkisi olmalı ve "
+            "bot rolü kullanıcıdan yukarıda olmalı."
+        )
+
+    except Exception as e:
+        return await ctx.send(
+            f"❌ Hata oluştu:\n```{e}```"
+        )
+
+    # =========================
+    # KAYIT BAŞLAT
+    # =========================
+
+    await ctx.send(
+        f"📋 Kayıt başlatıldı:\n"
+        f"Üye: {member.mention}\n"
+        f"Yeni isim: **{isim}**"
+    )
 
     view = RegisterView(member)
-    await ctx.send("Rol seç:", view=view)
+
+    await ctx.send(
+        "Rol seç:",
+        view=view
+    )
 
 
 @bot.command()
 async def kayitsayi(ctx):
-    await ctx.send(f"📊 Toplam kayıt sayısı: **{kayit_sayisi}**")
+
+    await ctx.send(
+        f"📊 Toplam kayıt sayısı: **{kayit_sayisi}**"
+    )
 
 
 # =========================
@@ -131,14 +196,23 @@ async def kayitsayi(ctx):
 @bot.event
 async def on_member_join(member):
 
-    channel = discord.utils.get(member.guild.text_channels, name="general")
+    channel = discord.utils.get(
+        member.guild.text_channels,
+        name="general"
+    )
+
     yetkili = f"<@&{YETKILI_ROLE_ID}>"
 
     embed = discord.Embed(
         title=f"{member.name} sunucuya geldi",
-        description=f"Hoş geldin {member.mention}\nYetkililer: {yetkili}",
+        description=(
+            f"Hoş geldin {member.mention}\n"
+            f"Yetkililer: {yetkili}"
+        ),
         color=discord.Color.green()
     )
+
+    embed.set_thumbnail(url=member.avatar.url)
 
     if channel:
         await channel.send(embed=embed)
@@ -150,7 +224,12 @@ async def on_member_join(member):
 
 @bot.event
 async def on_ready():
+
     print(f"Bot aktif: {bot.user}")
 
+
+# =========================
+# BOT RUN
+# =========================
 
 bot.run(TOKEN)
