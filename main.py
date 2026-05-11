@@ -48,7 +48,7 @@ class RegisterView(discord.ui.View):
 class RoleSelect(discord.ui.Select):
     def __init__(self, options, member):
         super().__init__(
-            placeholder="Rol seç… hayatını imzalıyorsun 😏",
+            placeholder="Rol seç… kariyerin başlıyor 😏",
             options=options
         )
         self.member = member
@@ -59,20 +59,46 @@ class RoleSelect(discord.ui.Select):
         guild = interaction.guild
         role_name = self.values[0]
 
-        role = guild.get_role(ROLE_IDS[role_name])
+        member = self.member
+
+        selected_role = guild.get_role(ROLE_IDS[role_name])
+        uye_role = guild.get_role(ROLE_IDS["Üye┇👤"])
         kayitsiz = guild.get_role(KAYITSIZ_ROLE_ID)
 
-        # rol ver
-        await self.member.add_roles(role)
+        roles_to_add = []
 
-        # kayıtsız rolünü garanti kaldır
-        if kayitsiz and kayitsiz in self.member.roles:
-            await self.member.remove_roles(kayitsiz)
+        # =========================
+        # ROLE RULES
+        # =========================
+
+        if role_name == "Üye┇👤":
+            roles_to_add = [selected_role]
+
+        elif role_name == "Futbolcu┇🧩":
+            roles_to_add = [selected_role, uye_role]
+
+        elif role_name == "Başkan┇🤵🏻‍♂️":
+            roles_to_add = [selected_role, uye_role]
+
+        elif role_name == "Teknik Direktör┇💼":
+            roles_to_add = [selected_role, uye_role]
+
+        elif role_name == "Bayan Üye┇🎀":
+            roles_to_add = [selected_role, uye_role]
+
+        # rolleri ver
+        for r in roles_to_add:
+            if r:
+                await member.add_roles(r)
+
+        # kayıtsız kaldır (garanti mod)
+        if kayitsiz and kayitsiz in member.roles:
+            await member.remove_roles(kayitsiz)
 
         kayit_sayisi += 1
 
         await interaction.response.edit_message(
-            content=f"✔️ {self.member.mention} kayıt edildi → **{role_name}**",
+            content=f"✔️ {member.mention} kayıt edildi → **{role_name}**",
             view=None
         )
 
@@ -84,7 +110,6 @@ class RoleSelect(discord.ui.Select):
 @bot.command()
 async def k(ctx, member: discord.Member, *, isim: str):
 
-    # yetki kontrol
     if YETKILI_ROLE_ID not in [r.id for r in ctx.author.roles]:
         return await ctx.send("❌ Bu komutu sadece Kayıt Yetkilisi kullanabilir.")
 
