@@ -1,7 +1,6 @@
 import os
 import discord
 from discord.ext import commands
-from collections import defaultdict
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -49,7 +48,7 @@ class RegisterView(discord.ui.View):
 class RoleSelect(discord.ui.Select):
     def __init__(self, options, member):
         super().__init__(
-            placeholder="Rol seç… hayatını seçiyorsun 😏",
+            placeholder="Rol seç… hayatını imzalıyorsun 😏",
             options=options
         )
         self.member = member
@@ -63,9 +62,11 @@ class RoleSelect(discord.ui.Select):
         role = guild.get_role(ROLE_IDS[role_name])
         kayitsiz = guild.get_role(KAYITSIZ_ROLE_ID)
 
+        # rol ver
         await self.member.add_roles(role)
 
-        if kayitsiz:
+        # kayıtsız rolünü garanti kaldır
+        if kayitsiz and kayitsiz in self.member.roles:
             await self.member.remove_roles(kayitsiz)
 
         kayit_sayisi += 1
@@ -83,6 +84,7 @@ class RoleSelect(discord.ui.Select):
 @bot.command()
 async def k(ctx, member: discord.Member, *, isim: str):
 
+    # yetki kontrol
     if YETKILI_ROLE_ID not in [r.id for r in ctx.author.roles]:
         return await ctx.send("❌ Bu komutu sadece Kayıt Yetkilisi kullanabilir.")
 
@@ -105,11 +107,11 @@ async def kayitsayi(ctx):
 async def on_member_join(member):
 
     channel = discord.utils.get(member.guild.text_channels, name="general")
-    role_mention = f"<@&{YETKILI_ROLE_ID}>"
+    yetkili = f"<@&{YETKILI_ROLE_ID}>"
 
     embed = discord.Embed(
         title=f"{member.name} sunucuya geldi",
-        description=f"Hoş geldin {member.mention}\nYetkililer: {role_mention}",
+        description=f"Hoş geldin {member.mention}\nYetkililer: {yetkili}",
         color=discord.Color.green()
     )
 
@@ -118,7 +120,7 @@ async def on_member_join(member):
 
 
 # =========================
-# READY EVENT
+# READY
 # =========================
 
 @bot.event
