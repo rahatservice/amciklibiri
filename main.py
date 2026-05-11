@@ -187,7 +187,31 @@ async def kayitsayi(ctx):
     await ctx.send(
         f"📊 Toplam kayıt sayısı: **{kayit_sayisi}**"
     )
+@bot.command()
 
+@commands.has_permissions(administrator=True)
+
+async def title(ctx, *, mesaj):
+
+    embed = discord.Embed(
+
+        title=mesaj,
+
+        color=discord.Color.blue()
+
+    )
+
+    await ctx.send(embed=embed)
+
+# Yetkisi olmayanlar kullanırsa
+
+@title.error
+
+async def title_error(ctx, error):
+
+    if isinstance(error, commands.MissingPermissions):
+
+        await ctx.send("Bu komutu sadece administrator kullanabilir.")
 
 # =========================
 # JOIN EVENT
